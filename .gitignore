@@ -11,7 +11,7 @@ __pycache__/
 .ipynb_checkpoints/
 
 # Data files (optional: keep raw CSVs tracked if needed)
-data/*.csv
+# data/*.csv
 
 # Model artifacts
 *.joblib
