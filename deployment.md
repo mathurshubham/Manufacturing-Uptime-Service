@@ -1,6 +1,7 @@
+
 # GCP Cloud Run Deployment Guide
 
-This document provides a step-by-step guide for deploying the containerized FastAPI application to Google Cloud Run. Cloud Run is a fully managed, serverless platform that automatically scales your application.
+This document provides a step-by-step guide for deploying the containerized FastAPI application and React Frontend to Google Cloud Run. Cloud Run is a fully managed, serverless platform that automatically scales your application.
 **Region Note:** This guide uses the `us-central1` region.
 
 ## Prerequisites
@@ -42,20 +43,30 @@ gcloud artifacts repositories create ml-projects \
     --description="Docker repository for ML projects"
 ```
 
-### Step 3: Build the Docker Image with Cloud Build
+### Step 3: Build the Docker Images with Cloud Build
 
-We use Google Cloud Build to build the Docker image directly in the cloud. It reads our `Dockerfile`, builds the image, and automatically pushes it to the Artifact Registry repository we just created.
+We use Google Cloud Build to build the Docker images directly in the cloud.
 
-**Important:** Make sure you run this command from the root directory of the project.
+**A. Build the Backend Image**
+Make sure you run this command from the root directory of the project.
 
 ```bash
 # Replace 'predictive-maint-api-2025' with your actual Project ID
 gcloud builds submit --tag us-central1-docker.pkg.dev/predictive-maint-api-2025/ml-projects/predictive-maintenance-api .
 ```
 
-### Step 4: Deploy the Container to Cloud Run
+**B. Build the Frontend Image**
+This builds the React application from the `frontend/` directory.
 
-This is the final step. We take the image we just built and deploy it as a managed service on Cloud Run.
+```bash
+gcloud builds submit --tag us-central1-docker.pkg.dev/predictive-maint-api-2025/ml-projects/predictive-maintenance-ui ./frontend
+```
+
+### Step 4: Deploy the Containers to Cloud Run
+
+We will deploy two separate services: one for the API and one for the UI.
+
+**A. Deploy the Backend API**
 
 ```bash
 # Replace 'predictive-maint-api-2025' with your actual Project ID
@@ -65,26 +76,41 @@ gcloud run deploy predictive-maintenance-service \
     --region=us-central1 \
     --allow-unauthenticated
 ```
+
+**B. Deploy the Frontend UI**
+
+```bash
+gcloud run deploy predictive-maintenance-ui \
+    --image=us-central1-docker.pkg.dev/predictive-maint-api-2025/ml-projects/predictive-maintenance-ui \
+    --platform=managed \
+    --region=us-central1 \
+    --allow-unauthenticated
+```
+
 -   `--platform=managed`: Specifies the fully managed serverless version of Cloud Run.
 -   `--region=us-central1`: Deploys the service to the US Central data center.
 -   `--allow-unauthenticated`: Makes the service's URL public so anyone can access it.
 
-After the command completes, it will output a **Service URL**.
+After the commands complete, they will output the **Service URLs**.
 
 ---
 
-## Accessing the Deployed Service
+## Accessing the Deployed Services
 
-The deployment command will provide a public URL, for example:
-`https://predictive-maintenance-service-xxxxxxxxxx-uc.a.run.app`
+You will have two live URLs.
 
-You can test this live URL:
+### 1. Frontend Dashboard (For Users)
+The deployment command for `predictive-maintenance-ui` provided a URL. Open this in your browser to use the application.
+Example: `https://predictive-maintenance-ui-xxxxxxxxxx-uc.a.run.app`
 
--   **Interactive Docs:** Append `/docs` to the URL in your browser to access the FastAPI documentation.
+### 2. Backend API (For Developers)
+The deployment command for `predictive-maintenance-service` provided a URL.
+
+-   **Interactive Docs:** Append `/docs` to the Backend URL to access Swagger UI.
 -   **cURL Request:** Use `curl` to send a POST request to the `/predict` endpoint.
     ```bash
     curl -X 'POST' \
-      'YOUR_SERVICE_URL_HERE/predict' \
+      'YOUR_BACKEND_SERVICE_URL_HERE/predict' \
       -H 'accept: application/json' \
       -H 'Content-Type: application/json' \
       -d '{
@@ -105,17 +131,24 @@ To avoid any future costs and to keep your GCP environment clean, you can remove
 
 Run these commands in order.
 
-### Step 1: Delete the Cloud Run Service
+### Step 1: Delete the Cloud Run Services
 
 ```bash
+# Delete Backend
 gcloud run services delete predictive-maintenance-service --region=us-central1
+
+# Delete Frontend
+gcloud run services delete predictive-maintenance-ui --region=us-central1
 ```
 
-### Step 2: Delete the Docker Image
+### Step 2: Delete the Docker Images
 
 ```bash
-# Replace 'predictive-maint-api-2025' with your actual Project ID
+# Delete Backend Image
 gcloud artifacts docker images delete us-central1-docker.pkg.dev/predictive-maint-api-2025/ml-projects/predictive-maintenance-api --delete-tags
+
+# Delete Frontend Image
+gcloud artifacts docker images delete us-central1-docker.pkg.dev/predictive-maint-api-2025/ml-projects/predictive-maintenance-ui --delete-tags
 ```
 
 ### Step 3: Delete the Artifact Registry Repository
@@ -131,4 +164,5 @@ This will delete the entire project and all resources within it. **This action i
 ```bash
 # Replace 'predictive-maint-api-2025' with your actual Project ID
 gcloud projects delete predictive-maint-api-2025
+```
 ```

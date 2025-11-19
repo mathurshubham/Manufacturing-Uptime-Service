@@ -34,12 +34,13 @@ This API provides a `failure_probability` score, enabling a "digital twin" syste
 -   **Containerization:** Docker & Docker Compose
 -   **Dependency Management:** Pip & `requirements.txt`
 -   **Cloud Deployment:** Google Cloud Run & Google Artifact Registry
+-   **Frontend UI:** React, Vite, Tailwind CSS, Shadcn/UI, Nginx.
 
 ---
 
 ## 3. How to Run the Project Locally
 
-The entire service is containerized, making it fully reproducible and easy to run on a local machine with just two commands.
+The entire full-stack application is containerized. You can spin up both the Frontend and Backend with a single command.
 
 **Prerequisites:**
 -   [Git](https://git-scm.com/) installed
@@ -51,14 +52,22 @@ git clone <your-repository-url>
 cd <your-repository-name>
 ```
 
-### Step 2: Build and Run the Container
-Use Docker Compose to build the application image and run the container in detached mode (`-d`). This single command handles everything.
+### Step 2: Build and Run the Stack
+Use Docker Compose to build the images and start the services.
 ```bash
 docker-compose up --build -d
 ```
+
+### Step 3: Access the Application
+Once running, you can access the services locally:
+
+*   **Frontend Dashboard:** [http://localhost:3000](http://localhost:3000)
+*   **Backend API Docs:** [http://localhost:8000/docs](http://localhost:8000/docs)
+
+
 The API will now be running and available at `http://localhost:8000`. The first build may take a few minutes.
 
-### Step 3: Test the Local API
+### Step 4: Test the Local API
 You can interact with the API using the automatically generated documentation or by sending a `curl` request.
 
 **Option A: Interactive Docs (Recommended)**
@@ -89,7 +98,7 @@ You can interact with the API using the automatically generated documentation or
     }
     ```
 
-### Step 4: Stop the Local Service
+### Step 5: Stop the Local Service
 To stop and remove the container and network, run:
 ```bash
 docker-compose down
@@ -97,35 +106,46 @@ docker-compose down
 
 ---
 
-## 4. Live Deployment on Google Cloud Run
+## 3. Live Deployment (Google Cloud Run)
 
-The service has been deployed to the cloud and is publicly accessible. The deployment is hosted in the `us-central1` region to maximize availability.
+The project is deployed as two separate microservices (Frontend and Backend) on Google Cloud Run in the `us-central1` region.
 
-**Live URL:** **[https://predictive-maintenance-service-644458477502.us-central1.run.app](https://predictive-maintenance-service-644458477502.us-central1.run.app)**
+### 🖥️ 1. Frontend Dashboard (For Visual Testing)
+Use this link to interact with the model via the React User Interface.
+> **Live UI:** **[https://predictive-maintenance-ui-644458477502.us-central1.run.app](https://predictive-maintenance-ui-644458477502.us-central1.run.app)**
 
-### Testing the Live API
+### ⚙️ 2. Backend API (For Technical Evaluation)
+Use this link to test the raw API endpoints via Postman, cURL, or the Swagger UI.
+> **API Base URL:** `https://predictive-maintenance-service-644458477502.us-central1.run.app`
 
-You can test the live API directly, no local setup required.
+#### A. Interactive Documentation (Swagger UI)
+Visit **[https://predictive-maintenance-service-644458477502.us-central1.run.app/docs](https://predictive-maintenance-service-644458477502.us-central1.run.app/docs)** to test endpoints directly in the browser.
 
-**Option A: Interactive Docs (Recommended)**
--   Visit the interactive docs page: **[https://predictive-maintenance-service-644458477502.us-central1.run.app/docs](https://predictive-maintenance-service-644458477502.us-central1.run.app/docs)**
+#### B. Sample cURL Command
+Copy and paste this into your terminal to test the API directly:
 
-**Option B: cURL Request**
--   Use the `curl` command, but point it to the live service URL:
-    ```bash
-    curl -X 'POST' \
-      'https://predictive-maintenance-service-644458477502.us-central1.run.app/predict' \
-      -H 'accept: application/json' \
-      -H 'Content-Type: application/json' \
-      -d '{
-        "Type": "L",
-        "Air temperature [K]": 300.5,
-        "Process temperature [K]": 310.8,
-        "Rotational speed [rpm]": 1398,
-        "Torque [Nm]": 66.4,
-        "Tool wear [min]": 191
-      }'
-    ```
+```bash
+curl -X 'POST' \
+  'https://predictive-maintenance-service-644458477502.us-central1.run.app/predict' \
+  -H 'accept: application/json' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "Type": "L",
+    "Air temperature [K]": 300.5,
+    "Process temperature [K]": 310.8,
+    "Rotational speed [rpm]": 1398,
+    "Torque [Nm]": 66.4,
+    "Tool wear [min]": 191
+  }'
+```
+
+**Expected JSON Response:**
+```json
+{
+  "prediction_label": "Failure Imminent",
+  "failure_probability": 0.85
+}
+```
 
 ### Example Payloads for Testing
 
