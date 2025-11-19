@@ -1,0 +1,7 @@
+.git
+.gitignore
+__pycache__/
+*.pyc
+.ipynb_checkpoints
+# Do NOT ignore the joblib file!
+!app/model_pipeline.joblib

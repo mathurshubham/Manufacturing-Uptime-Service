@@ -2,13 +2,22 @@ import uvicorn
 import joblib
 import pandas as pd
 import os
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(
     title="Predictive Maintenance API",
     description="An API to predict machine failure based on sensor data.",
     version="1.0"
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 class SensorInput(BaseModel):
@@ -20,12 +29,11 @@ class SensorInput(BaseModel):
     tool_wear_min: int = Field(..., alias='Tool wear [min]', description="Tool wear in minutes")
 
     class Config:
-        populate_by_name = True # Allows using either the field name or its alias
+        populate_by_name = True
 
 class PredictionOut(BaseModel):
     prediction_label: str
     failure_probability: float
-
 
 pipeline = None
 
@@ -44,8 +52,7 @@ async def load_model():
         print(f"Model loaded successfully from {model_path}")
     except FileNotFoundError:
         print(f"Error: Model file not found at {model_path}")
-        pipeline = None # Ensure pipeline is None if loading fails
-
+        pipeline = None
 
 @app.post("/predict", response_model=PredictionOut, tags=["Prediction"])
 async def predict_failure(sensor_data: SensorInput):
@@ -53,15 +60,17 @@ async def predict_failure(sensor_data: SensorInput):
     Receives sensor data, makes a prediction, and returns the failure probability.
     """
     if pipeline is None:
-        return {
-            "error": "Model not loaded. Please check server logs."
-        }
+        raise HTTPException(
+            status_code=503, 
+            detail="Model not loaded. The server cannot process predictions right now."
+        )
 
     input_data = pd.DataFrame([sensor_data.model_dump(by_alias=True)])
 
     prediction_probabilities = pipeline.predict_proba(input_data)
-
-    failure_probability = prediction_probabilities[0, 1]
+    
+    failure_probability = float(prediction_probabilities[0, 1])
+    
     prediction_label = 'Failure Imminent' if failure_probability > 0.5 else 'Normal Operation'
 
     return {
