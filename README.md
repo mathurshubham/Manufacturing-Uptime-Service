@@ -38,75 +38,34 @@ This API provides a `failure_probability` score, enabling a "digital twin" syste
 
 ---
 
-## 3. How to Run the Project Locally
+## 3. Project Methodology & Workflow
 
-The entire full-stack application is containerized. You can spin up both the Frontend and Backend with a single command.
+This project follows a structured MLOps workflow.
 
-**Prerequisites:**
--   [Git](https://git-scm.com/) installed
--   [Docker](https://www.docker.com/products/docker-desktop/) and Docker Compose installed and running.
+1.  **Research & EDA (`notebook.ipynb`):**
+    -   A thorough Exploratory Data Analysis of the "AI4I 2020 Predictive Maintenance Dataset" revealed a **severe class imbalance** (96.6% No Failure vs. 3.4% Failure).
+    -   This critical finding established that 'accuracy' is a misleading metric. The project's success was therefore defined by maximizing the **F1-score** and **Recall** for the minority 'failure' class.
+    -   Feature importance analysis showed that `Torque`, `Rotational speed`, and `Tool wear` were the strongest predictors.
 
-### Step 1: Clone the Repository
-```bash
-git clone <your-repository-url>
-cd <your-repository-name>
-```
+2.  **Model Training & Tuning (`train.py`):**
+    -   A `scikit-learn` Pipeline was constructed to ensure robust and reproducible preprocessing.
+    -   Multiple models (Logistic Regression, Random Forest) were evaluated. A `RandomForestClassifier` was selected as the base model for its superior initial performance.
+    -   **Hyperparameter tuning** was performed using `RandomizedSearchCV` to find the optimal settings for the Random Forest model.
+    -   This tuning resulted in a **significant performance increase**:
+        -   **Recall** for the failure class improved from **0.49 to 0.62** (+26.5%).
+        -   **F1-Score** for the failure class improved from **0.63 to 0.73** (+15.9%).
+    -   The finalized logic with the tuned model was exported into `train.py`, an automated script that saves the final production-ready artifact (`model_pipeline.joblib`).
 
-### Step 2: Build and Run the Stack
-Use Docker Compose to build the images and start the services.
-```bash
-docker-compose up --build -d
-```
-
-### Step 3: Access the Application
-Once running, you can access the services locally:
-
-*   **Frontend Dashboard:** [http://localhost:3000](http://localhost:3000)
-*   **Backend API Docs:** [http://localhost:8000/docs](http://localhost:8000/docs)
-
-
-The API will now be running and available at `http://localhost:8000`. The first build may take a few minutes.
-
-### Step 4: Test the Local API
-You can interact with the API using the automatically generated documentation or by sending a `curl` request.
-
-**Option A: Interactive Docs (Recommended)**
--   Open your web browser and navigate to **[http://localhost:8000/docs](http://localhost:8000/docs)**.
--   Click on the `/predict` endpoint, click "Try it out", and use the example JSON payloads below to test different scenarios.
-
-**Option B: cURL Request**
--   Open a new terminal and run the following command to test a "likely failure" scenario:
-    ```bash
-    curl -X 'POST' \
-      'http://localhost:8000/predict' \
-      -H 'accept: application/json' \
-      -H 'Content-Type: application/json' \
-      -d '{
-        "Type": "L",
-        "Air temperature [K]": 300.5,
-        "Process temperature [K]": 310.8,
-        "Rotational speed [rpm]": 1398,
-        "Torque [Nm]": 66.4,
-        "Tool wear [min]": 191
-      }'
-    ```
--   **Expected JSON Response:**
-    ```json
-    {
-      "prediction_label": "Failure Imminent",
-      "failure_probability": 0.85
-    }
-    ```
-
-### Step 5: Stop the Local Service
-To stop and remove the container and network, run:
-```bash
-docker-compose down
-```
-
+3.  **Deployment (`predict.py` & `Dockerfile`):**
+    -   A web service was built using **FastAPI**. It loads the saved pipeline at startup and exposes a `/predict` endpoint.
+    -   **Pydantic** is used to enforce a strict schema for incoming JSON data, preventing errors from malformed requests.
+    -   The entire application, including its dependencies and the tuned model artifact, was containerized using **Docker** for maximum reproducibility.
+    -   **Docker Compose** is used to simplify the local build and run process.
+    -   The final container was deployed to **Google Cloud Run**, making the service publicly accessible via a secure HTTPS endpoint.
+  
 ---
 
-## 3. Live Deployment (Google Cloud Run)
+## 4. Live Deployment (Google Cloud Run)
 
 The project is deployed as two separate microservices (Frontend and Backend) on Google Cloud Run in the `us-central1` region.
 
@@ -195,30 +154,76 @@ Here are some different scenarios for peer reviewers to test with:
 
 ---
 
-## 5. Project Methodology & Workflow
 
-This project follows a structured MLOps workflow.
 
-1.  **Research & EDA (`notebook.ipynb`):**
-    -   A thorough Exploratory Data Analysis of the "AI4I 2020 Predictive Maintenance Dataset" revealed a **severe class imbalance** (96.6% No Failure vs. 3.4% Failure).
-    -   This critical finding established that 'accuracy' is a misleading metric. The project's success was therefore defined by maximizing the **F1-score** and **Recall** for the minority 'failure' class.
-    -   Feature importance analysis showed that `Torque`, `Rotational speed`, and `Tool wear` were the strongest predictors.
+## 5. How to Run the Project Locally
 
-2.  **Model Training & Tuning (`train.py`):**
-    -   A `scikit-learn` Pipeline was constructed to ensure robust and reproducible preprocessing.
-    -   Multiple models (Logistic Regression, Random Forest) were evaluated. A `RandomForestClassifier` was selected as the base model for its superior initial performance.
-    -   **Hyperparameter tuning** was performed using `RandomizedSearchCV` to find the optimal settings for the Random Forest model.
-    -   This tuning resulted in a **significant performance increase**:
-        -   **Recall** for the failure class improved from **0.49 to 0.62** (+26.5%).
-        -   **F1-Score** for the failure class improved from **0.63 to 0.73** (+15.9%).
-    -   The finalized logic with the tuned model was exported into `train.py`, an automated script that saves the final production-ready artifact (`model_pipeline.joblib`).
+The entire full-stack application is containerized. You can spin up both the Frontend and Backend with a single command.
 
-3.  **Deployment (`predict.py` & `Dockerfile`):**
-    -   A web service was built using **FastAPI**. It loads the saved pipeline at startup and exposes a `/predict` endpoint.
-    -   **Pydantic** is used to enforce a strict schema for incoming JSON data, preventing errors from malformed requests.
-    -   The entire application, including its dependencies and the tuned model artifact, was containerized using **Docker** for maximum reproducibility.
-    -   **Docker Compose** is used to simplify the local build and run process.
-    -   The final container was deployed to **Google Cloud Run**, making the service publicly accessible via a secure HTTPS endpoint.
+**Prerequisites:**
+-   [Git](https://git-scm.com/) installed
+-   [Docker](https://www.docker.com/products/docker-desktop/) and Docker Compose installed and running.
+
+### Step 1: Clone the Repository
+```bash
+git clone <your-repository-url>
+cd <your-repository-name>
+```
+
+### Step 2: Build and Run the Stack
+Use Docker Compose to build the images and start the services.
+```bash
+docker-compose up --build -d
+```
+
+### Step 3: Access the Application
+Once running, you can access the services locally:
+
+*   **Frontend Dashboard:** [http://localhost:3000](http://localhost:3000)
+*   **Backend API Docs:** [http://localhost:8000/docs](http://localhost:8000/docs)
+
+
+The API will now be running and available at `http://localhost:8000`. The first build may take a few minutes.
+
+### Step 4: Test the Local API
+You can interact with the API using the automatically generated documentation or by sending a `curl` request.
+
+**Option A: Interactive Docs (Recommended)**
+-   Open your web browser and navigate to **[http://localhost:8000/docs](http://localhost:8000/docs)**.
+-   Click on the `/predict` endpoint, click "Try it out", and use the example JSON payloads below to test different scenarios.
+
+**Option B: cURL Request**
+-   Open a new terminal and run the following command to test a "likely failure" scenario:
+    ```bash
+    curl -X 'POST' \
+      'http://localhost:8000/predict' \
+      -H 'accept: application/json' \
+      -H 'Content-Type: application/json' \
+      -d '{
+        "Type": "L",
+        "Air temperature [K]": 300.5,
+        "Process temperature [K]": 310.8,
+        "Rotational speed [rpm]": 1398,
+        "Torque [Nm]": 66.4,
+        "Tool wear [min]": 191
+      }'
+    ```
+-   **Expected JSON Response:**
+    ```json
+    {
+      "prediction_label": "Failure Imminent",
+      "failure_probability": 0.85
+    }
+    ```
+
+### Step 5: Stop the Local Service
+To stop and remove the container and network, run:
+```bash
+docker-compose down
+```
+
+---
+
 
 ## 6. Course Deliverables Checklist
 
