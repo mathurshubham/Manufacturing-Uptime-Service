@@ -99,22 +99,22 @@ docker-compose down
 
 ## 4. Live Deployment on Google Cloud Run
 
-The service has been deployed to the cloud and is publicly accessible.
+The service has been deployed to the cloud and is publicly accessible. The deployment is hosted in the `us-central1` region to maximize availability.
 
-**Live URL:** **[https://predictive-maintenance-service-644458477502.asia-south1.run.app/](https://predictive-maintenance-service-644458477502.asia-south1.run.app/)**
+**Live URL:** **[https://predictive-maintenance-service-644458477502.us-central1.run.app](https://predictive-maintenance-service-644458477502.us-central1.run.app)**
 
 ### Testing the Live API
 
 You can test the live API directly, no local setup required.
 
 **Option A: Interactive Docs (Recommended)**
--   Visit the interactive docs page: **[https://predictive-maintenance-service-644458477502.asia-south1.run.app/docs](https://predictive-maintenance-service-644458477502.asia-south1.run.app/docs)**
+-   Visit the interactive docs page: **[https://predictive-maintenance-service-644458477502.us-central1.run.app/docs](https://predictive-maintenance-service-644458477502.us-central1.run.app/docs)**
 
 **Option B: cURL Request**
 -   Use the `curl` command, but point it to the live service URL:
     ```bash
     curl -X 'POST' \
-      'https://predictive-maintenance-service-644458477502.asia-south1.run.app/predict' \
+      'https://predictive-maintenance-service-644458477502.us-central1.run.app/predict' \
       -H 'accept: application/json' \
       -H 'Content-Type: application/json' \
       -d '{
@@ -191,7 +191,7 @@ This project follows a structured MLOps workflow.
     -   This tuning resulted in a **significant performance increase**:
         -   **Recall** for the failure class improved from **0.49 to 0.62** (+26.5%).
         -   **F1-Score** for the failure class improved from **0.63 to 0.73** (+15.9%).
-    -   The finalized logic with the tuned model was exported into `train.py`, an automated script that saves the final production-ready artifact (`model_pipeline.lib`).
+    -   The finalized logic with the tuned model was exported into `train.py`, an automated script that saves the final production-ready artifact (`model_pipeline.joblib`).
 
 3.  **Deployment (`predict.py` & `Dockerfile`):**
     -   A web service was built using **FastAPI**. It loads the saved pipeline at startup and exposes a `/predict` endpoint.

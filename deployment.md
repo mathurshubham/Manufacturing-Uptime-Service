@@ -1,6 +1,7 @@
 # GCP Cloud Run Deployment Guide
 
 This document provides a step-by-step guide for deploying the containerized FastAPI application to Google Cloud Run. Cloud Run is a fully managed, serverless platform that automatically scales your application.
+**Region Note:** This guide uses the `us-central1` region.
 
 ## Prerequisites
 
@@ -32,12 +33,12 @@ gcloud services enable run.googleapis.com
 
 ### Step 2: Create an Artifact Registry Repository
 
-This repository is a private Docker registry where we will store our application's container image. We will create it in a region close to India for lower latency.
+This repository is a private Docker registry where we will store our application's container image. We create it in `us-central1`.
 
 ```bash
 gcloud artifacts repositories create ml-projects \
     --repository-format=docker \
-    --location=asia-south1 \
+    --location=us-central1 \
     --description="Docker repository for ML projects"
 ```
 
@@ -49,7 +50,7 @@ We use Google Cloud Build to build the Docker image directly in the cloud. It re
 
 ```bash
 # Replace 'predictive-maint-api-2025' with your actual Project ID
-gcloud builds submit --tag asia-south1-docker.pkg.dev/predictive-maint-api-2025/ml-projects/predictive-maintenance-api .
+gcloud builds submit --tag us-central1-docker.pkg.dev/predictive-maint-api-2025/ml-projects/predictive-maintenance-api .
 ```
 
 ### Step 4: Deploy the Container to Cloud Run
@@ -59,13 +60,13 @@ This is the final step. We take the image we just built and deploy it as a manag
 ```bash
 # Replace 'predictive-maint-api-2025' with your actual Project ID
 gcloud run deploy predictive-maintenance-service \
-    --image=asia-south1-docker.pkg.dev/predictive-maint-api-2025/ml-projects/predictive-maintenance-api \
+    --image=us-central1-docker.pkg.dev/predictive-maint-api-2025/ml-projects/predictive-maintenance-api \
     --platform=managed \
-    --region=asia-south1 \
+    --region=us-central1 \
     --allow-unauthenticated
 ```
 -   `--platform=managed`: Specifies the fully managed serverless version of Cloud Run.
--   `--region=asia-south1`: Deploys the service to the Mumbai data center.
+-   `--region=us-central1`: Deploys the service to the US Central data center.
 -   `--allow-unauthenticated`: Makes the service's URL public so anyone can access it.
 
 After the command completes, it will output a **Service URL**.
@@ -107,20 +108,20 @@ Run these commands in order.
 ### Step 1: Delete the Cloud Run Service
 
 ```bash
-gcloud run services delete predictive-maintenance-service --region=asia-south1
+gcloud run services delete predictive-maintenance-service --region=us-central1
 ```
 
 ### Step 2: Delete the Docker Image
 
 ```bash
 # Replace 'predictive-maint-api-2025' with your actual Project ID
-gcloud artifacts docker images delete asia-south1-docker.pkg.dev/predictive-maint-api-2025/ml-projects/predictive-maintenance-api --delete-tags
+gcloud artifacts docker images delete us-central1-docker.pkg.dev/predictive-maint-api-2025/ml-projects/predictive-maintenance-api --delete-tags
 ```
 
 ### Step 3: Delete the Artifact Registry Repository
 
 ```bash
-gcloud artifacts repositories delete ml-projects --location=asia-south1
+gcloud artifacts repositories delete ml-projects --location=us-central1
 ```
 
 ### Step 4: (Optional) Delete the GCP Project
