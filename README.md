@@ -33,12 +33,13 @@ This API provides a `failure_probability` score, enabling a "digital twin" syste
 -   **Data Validation:** Pydantic
 -   **Containerization:** Docker & Docker Compose
 -   **Dependency Management:** Pip & `requirements.txt`
+-   **Cloud Deployment:** Google Cloud Run & Google Artifact Registry
 
 ---
 
-## 3. How to Run the Project
+## 3. How to Run the Project Locally
 
-The entire service is containerized, making it fully reproducible and easy to run with just two commands.
+The entire service is containerized, making it fully reproducible and easy to run on a local machine with just two commands.
 
 **Prerequisites:**
 -   [Git](https://git-scm.com/) installed
@@ -57,12 +58,12 @@ docker-compose up --build -d
 ```
 The API will now be running and available at `http://localhost:8000`. The first build may take a few minutes.
 
-### Step 3: Test the API
+### Step 3: Test the Local API
 You can interact with the API using the automatically generated documentation or by sending a `curl` request.
 
 **Option A: Interactive Docs (Recommended)**
 -   Open your web browser and navigate to **[http://localhost:8000/docs](http://localhost:8000/docs)**.
--   Click on the `/predict` endpoint, click "Try it out", and use the example JSON payloads to test different scenarios.
+-   Click on the `/predict` endpoint, click "Try it out", and use the example JSON payloads below to test different scenarios.
 
 **Option B: cURL Request**
 -   Open a new terminal and run the following command to test a "likely failure" scenario:
@@ -88,7 +89,7 @@ You can interact with the API using the automatically generated documentation or
     }
     ```
 
-### Step 4: Stop the Service
+### Step 4: Stop the Local Service
 To stop and remove the container and network, run:
 ```bash
 docker-compose down
@@ -96,7 +97,85 @@ docker-compose down
 
 ---
 
-## 4. Project Methodology & Workflow
+## 4. Live Deployment on Google Cloud Run
+
+The service has been deployed to the cloud and is publicly accessible.
+
+**Live URL:** **[https://predictive-maintenance-service-644458477502.asia-south1.run.app/](https://predictive-maintenance-service-644458477502.asia-south1.run.app/)**
+
+### Testing the Live API
+
+You can test the live API directly, no local setup required.
+
+**Option A: Interactive Docs (Recommended)**
+-   Visit the interactive docs page: **[https://predictive-maintenance-service-644458477502.asia-south1.run.app/docs](https://predictive-maintenance-service-644458477502.asia-south1.run.app/docs)**
+
+**Option B: cURL Request**
+-   Use the `curl` command, but point it to the live service URL:
+    ```bash
+    curl -X 'POST' \
+      'https://predictive-maintenance-service-644458477502.asia-south1.run.app/predict' \
+      -H 'accept: application/json' \
+      -H 'Content-Type: application/json' \
+      -d '{
+        "Type": "L",
+        "Air temperature [K]": 300.5,
+        "Process temperature [K]": 310.8,
+        "Rotational speed [rpm]": 1398,
+        "Torque [Nm]": 66.4,
+        "Tool wear [min]": 191
+      }'
+    ```
+
+### Example Payloads for Testing
+
+Here are some different scenarios for peer reviewers to test with:
+
+**1. Normal Operation (Low Stress)**
+*Description: A healthy machine running smoothly.*
+```json
+{
+  "Type": "M",
+  "Air temperature [K]": 298.5,
+  "Process temperature [K]": 309.1,
+  "Rotational speed [rpm]": 1500,
+  "Torque [Nm]": 40.2,
+  "Tool wear [min]": 10
+}
+```
+*Expected Result: `Normal Operation` with a very low failure probability.*
+
+**2. Clear Failure Case (High Stress)**
+*Description: A machine under extreme load with significant wear, a classic failure scenario.*
+```json
+{
+  "Type": "L",
+  "Air temperature [K]": 301.8,
+  "Process temperature [K]": 311.2,
+  "Rotational speed [rpm]": 1380,
+  "Torque [Nm]": 75.3,
+  "Tool wear [min]": 215
+}
+```
+*Expected Result: `Failure Imminent` with a very high failure probability (e.g., > 0.90).*
+
+**3. Borderline / Nuanced Case**
+*Description: A machine with high, but not extreme, wear and load. This tests the sensitivity of the tuned model.*
+```json
+{
+  "Type": "H",
+  "Air temperature [K]": 302.4,
+  "Process temperature [K]": 311.6,
+  "Rotational speed [rpm]": 1450,
+  "Torque [Nm]": 58.5,
+  "Tool wear [min]": 170
+}
+```
+*Expected Result: Likely `Failure Imminent`, or at least a high failure probability (e.g., > 0.60).*
+
+---
+
+## 5. Project Methodology & Workflow
 
 This project follows a structured MLOps workflow.
 
@@ -112,15 +191,16 @@ This project follows a structured MLOps workflow.
     -   This tuning resulted in a **significant performance increase**:
         -   **Recall** for the failure class improved from **0.49 to 0.62** (+26.5%).
         -   **F1-Score** for the failure class improved from **0.63 to 0.73** (+15.9%).
-    -   The finalized logic with the tuned model was exported into `train.py`, an automated script that saves the final production-ready artifact (`model_pipeline.joblib`).
+    -   The finalized logic with the tuned model was exported into `train.py`, an automated script that saves the final production-ready artifact (`model_pipeline.lib`).
 
 3.  **Deployment (`predict.py` & `Dockerfile`):**
     -   A web service was built using **FastAPI**. It loads the saved pipeline at startup and exposes a `/predict` endpoint.
     -   **Pydantic** is used to enforce a strict schema for incoming JSON data, preventing errors from malformed requests.
-    -   The entire application, including its dependencies and the tuned model artifact, was containerized using **Docker** for maximum reproducibility and ease of deployment.
+    -   The entire application, including its dependencies and the tuned model artifact, was containerized using **Docker** for maximum reproducibility.
     -   **Docker Compose** is used to simplify the local build and run process.
+    -   The final container was deployed to **Google Cloud Run**, making the service publicly accessible via a secure HTTPS endpoint.
 
-## 5. Course Deliverables Checklist
+## 6. Course Deliverables Checklist
 
 This section maps the project files to the course deliverables for easy evaluation.
 
@@ -131,4 +211,5 @@ This section maps the project files to the course deliverables for easy evaluati
 -   [x] **Script `predict.py`:** A script that loads the model and serves it via a FastAPI web service.
 -   [x] **Files with dependencies (`requirements.txt`):** Lists all required Python packages.
 -   [x] **`Dockerfile`:** Contains the instructions to build the service image.
--   [x] **Deployment:** The application is deployed locally with Docker, and the `README` provides clear instructions and `curl` commands to interact with it.
+-   [x] **Deployment:** The application is deployed locally with Docker, and the `README` provides clear instructions to interact with it.
+-   [x] **Cloud Deployment:** The service is deployed to Google Cloud Run. The public URL is available in this README, and the deployment steps are documented in `deployment.md`.
