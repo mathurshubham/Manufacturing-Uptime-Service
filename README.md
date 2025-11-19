@@ -119,3 +119,16 @@ This project follows a structured MLOps workflow.
     -   **Pydantic** is used to enforce a strict schema for incoming JSON data, preventing errors from malformed requests.
     -   The entire application, including its dependencies and the tuned model artifact, was containerized using **Docker** for maximum reproducibility and ease of deployment.
     -   **Docker Compose** is used to simplify the local build and run process.
+
+## 5. Course Deliverables Checklist
+
+This section maps the project files to the course deliverables for easy evaluation.
+
+-   [x] **`README.md`:** This file.
+-   [x] **Data (`data/predictive_maintenance.csv`):** The dataset is included in the repository.
+-   [x] **Notebook (`notebook.ipynb`):** Contains data preparation, extensive EDA, model selection, and hyperparameter tuning.
+-   [x] **Script `train.py`:** A script that trains the final tuned model and saves the artifact.
+-   [x] **Script `predict.py`:** A script that loads the model and serves it via a FastAPI web service.
+-   [x] **Files with dependencies (`requirements.txt`):** Lists all required Python packages.
+-   [x] **`Dockerfile`:** Contains the instructions to build the service image.
+-   [x] **Deployment:** The application is deployed locally with Docker, and the `README` provides clear instructions and `curl` commands to interact with it.
