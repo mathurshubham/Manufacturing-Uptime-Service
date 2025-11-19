@@ -18,6 +18,32 @@ export default defineConfig(({ mode }) => {
         alias: {
           '@': path.resolve(__dirname, '.'),
         }
-      }
+      },
+      build: {
+        // 1. Disable source maps (reduces upload size significantly)
+        sourcemap: false,
+        // 2. Chunk size warning limit
+        chunkSizeWarningLimit: 500,
+        // 3. Code Splitting Strategy
+        rollupOptions: {
+            output: {
+                manualChunks: (id) => {
+                    if (id.includes('node_modules')) {
+                        if (id.includes('react') || id.includes('react-dom')) {
+                            return 'react-vendor';
+                        }
+                        if (id.includes('lucide-react')) {
+                            return 'lucide-vendor';
+                        }
+                        if (id.includes('recharts')) {
+                            return 'recharts-vendor';
+                        }
+                        // Split other large libs here if needed
+                        return 'vendor';
+                    }
+                },
+            },
+        },
+      },
     };
 });
