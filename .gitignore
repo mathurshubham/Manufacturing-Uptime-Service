@@ -37,3 +37,5 @@ build/
 .idea/
 
 node_modules/
+
+codegrab-output.md
