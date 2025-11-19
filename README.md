@@ -11,7 +11,7 @@
 
 This repository contains the Midterm Project for the [DataTalks.Club ML Zoomcamp](https://github.com/DataTalksClub/machine-learning-zoomcamp).
 
-The project is an end-to-end machine learning application that predicts machine failure based on real-time sensor data. The final product is a containerized REST API built with FastAPI that serves predictions from a trained Scikit-learn model.
+The project is an end-to-end machine learning application that predicts machine failure based on real-time sensor data. The final product is a containerized REST API built with FastAPI that serves predictions from a trained and tuned Scikit-learn model.
 
 ### 1.1. The Problem & Business Value
 
@@ -27,7 +27,7 @@ This API provides a `failure_probability` score, enabling a "digital twin" syste
 ## 2. Tech Stack
 
 -   **Programming Language:** Python 3.12
--   **Machine Learning:** Scikit-learn (for the entire modeling and preprocessing pipeline)
+-   **Machine Learning:** Scikit-learn (for the entire modeling, preprocessing, and tuning pipeline)
 -   **Data Analysis:** Pandas, Matplotlib, Seaborn
 -   **API Framework:** FastAPI with Uvicorn (for high-performance, asynchronous web service)
 -   **Data Validation:** Pydantic
@@ -44,7 +44,7 @@ The entire service is containerized, making it fully reproducible and easy to ru
 -   [Git](https://git-scm.com/) installed
 -   [Docker](https://www.docker.com/products/docker-desktop/) and Docker Compose installed and running.
 
-### Step 1: Clone the Repository```bash
+### Step 1: Clone the Repository
 ```bash
 git clone <your-repository-url>
 cd <your-repository-name>
@@ -101,19 +101,21 @@ docker-compose down
 This project follows a structured MLOps workflow.
 
 1.  **Research & EDA (`notebook.ipynb`):**
-    -   The project began with a thorough Exploratory Data Analysis of the "AI4I 2020 Predictive Maintenance Dataset".
-    -   A critical finding was the **severe class imbalance** (96.6% No Failure vs. 3.4% Failure), which made 'accuracy' a misleading metric.
-    -   The project's success metric was therefore defined as maximizing the **F1-score** and **Recall** for the minority 'failure' class.
+    -   A thorough Exploratory Data Analysis of the "AI4I 2020 Predictive Maintenance Dataset" revealed a **severe class imbalance** (96.6% No Failure vs. 3.4% Failure).
+    -   This critical finding established that 'accuracy' is a misleading metric. The project's success was therefore defined by maximizing the **F1-score** and **Recall** for the minority 'failure' class.
     -   Feature importance analysis showed that `Torque`, `Rotational speed`, and `Tool wear` were the strongest predictors.
 
-2.  **Model Training (`train.py`):**
+2.  **Model Training & Tuning (`train.py`):**
     -   A `scikit-learn` Pipeline was constructed to ensure robust and reproducible preprocessing.
-    -   Multiple models (Logistic Regression, Random Forest) were evaluated.
-    -   The final model chosen was a `RandomForestClassifier`, as it provided the best recall (49%) and F1-score (0.63) for the failure class.
-    -   The finalized logic was exported into `train.py`, an automated script that trains the model on the full dataset and saves the pipeline artifact (`model_pipeline.joblib`).
+    -   Multiple models (Logistic Regression, Random Forest) were evaluated. A `RandomForestClassifier` was selected as the base model for its superior initial performance.
+    -   **Hyperparameter tuning** was performed using `RandomizedSearchCV` to find the optimal settings for the Random Forest model.
+    -   This tuning resulted in a **significant performance increase**:
+        -   **Recall** for the failure class improved from **0.49 to 0.62** (+26.5%).
+        -   **F1-Score** for the failure class improved from **0.63 to 0.73** (+15.9%).
+    -   The finalized logic with the tuned model was exported into `train.py`, an automated script that saves the final production-ready artifact (`model_pipeline.joblib`).
 
 3.  **Deployment (`predict.py` & `Dockerfile`):**
     -   A web service was built using **FastAPI**. It loads the saved pipeline at startup and exposes a `/predict` endpoint.
     -   **Pydantic** is used to enforce a strict schema for incoming JSON data, preventing errors from malformed requests.
-    -   The entire application, including its dependencies and the model artifact, was containerized using **Docker** for maximum reproducibility and ease of deployment.
+    -   The entire application, including its dependencies and the tuned model artifact, was containerized using **Docker** for maximum reproducibility and ease of deployment.
     -   **Docker Compose** is used to simplify the local build and run process.
