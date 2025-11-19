@@ -48,7 +48,17 @@ def train_model():
             ('cat', categorical_transformer, CATEGORICAL_FEATURES)
         ])
     
-    final_model = RandomForestClassifier(random_state=42)
+    # final_model = RandomForestClassifier(random_state=42)
+
+
+    final_model = RandomForestClassifier(
+        random_state=42,
+        n_estimators=200,
+        min_samples_split=2,
+        min_samples_leaf=1,
+        max_features='log2',
+        max_depth=30
+    )
 
     pipeline = Pipeline(steps=[('preprocessor', preprocessor),
                               ('model', final_model)])
