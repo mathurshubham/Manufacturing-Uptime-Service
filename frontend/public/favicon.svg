@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
+  <!-- Background Circle -->
+  <circle cx="50" cy="50" r="48" fill="#0f172a" stroke="#3b82f6" stroke-width="4"/>
+  
+  <!-- Gear Icon -->
+  <path d="M50 25V15M50 85V75M85 50H75M25 50H15M67.7 67.7L60.6 60.6M39.4 39.4L32.3 32.3M67.7 32.3L60.6 39.4M39.4 60.6L32.3 67.7" 
+        stroke="#94a3b8" stroke-width="8" stroke-linecap="round"/>
+  
+  <!-- Pulse/Chart Line (The "Prediction" aspect) -->
+  <path d="M20 50 H35 L42 32 L58 68 L65 50 H80" 
+        stroke="#10b981" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

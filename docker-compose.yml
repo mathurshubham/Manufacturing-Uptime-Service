@@ -1,20 +1,24 @@
 version: '3.8'
 
 services:
-  # This is the name of our service
+  # Backend API
   api:
-    # Tell Docker Compose to build the image from the Dockerfile in the current directory
     build:
       context: .
       dockerfile: Dockerfile
-    
-    # Give the container a friendly name
     container_name: predictive-maintenance-api
-
-    # Map port 8000 on the host machine to port 8000 inside the container.
-    # This is how you access the API from your browser.
     ports:
       - "8000:8000"
-
-    # Automatically restart the container if it crashes, unless it was manually stopped.
     restart: unless-stopped
+
+  # Frontend UI
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: predictive-maintenance-ui
+    ports:
+      - "3000:80"
+    restart: unless-stopped
+    depends_on:
+      - api
